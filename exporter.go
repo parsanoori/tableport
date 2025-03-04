@@ -22,8 +22,6 @@ var (
 	rowSize            = 20
 )
 
-var embeddedFont []byte
-
 var tempFontPath string // Store the temp font path
 
 // init() runs when the package is imported
@@ -32,7 +30,7 @@ func init() {
 	tempFontPath = filepath.Join(tempDir, "embedded_font.ttf")
 
 	// Write font to the temp file
-	err := os.WriteFile(tempFontPath, embeddedFont, 0644)
+	err := os.WriteFile(tempFontPath, myFont, 0644)
 	if err != nil {
 		panic("Failed to write the embedded font to a temp file")
 	}
