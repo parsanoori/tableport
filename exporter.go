@@ -1,8 +1,11 @@
 package tableport
 
 import (
+	_ "embed"
 	"errors"
 	"fmt"
+	"os"
+	"path/filepath"
 	"reflect"
 	"unicode"
 
@@ -10,11 +13,36 @@ import (
 	"github.com/signintech/gopdf"
 )
 
+//go:embed assets/fonts/Vazir.ttf
+var myFont []byte
+
 var (
 	widthFactor        = 7
 	widthFactorPersian = 5
 	rowSize            = 20
 )
+
+var embeddedFont []byte
+
+var tempFontPath string // Store the temp font path
+
+// init() runs when the package is imported
+func init() {
+	tempDir := os.TempDir() // Get OS temp directory
+	tempFontPath = filepath.Join(tempDir, "embedded_font.ttf")
+
+	// Write font to the temp file
+	err := os.WriteFile(tempFontPath, embeddedFont, 0644)
+	if err != nil {
+		panic("Failed to write the embedded font to a temp file")
+	}
+
+	// Optional: Delete the temp file when the program exits
+	go func() {
+		<-make(chan struct{}) // Prevent premature cleanup (adjust if needed)
+		os.Remove(tempFontPath)
+	}()
+}
 
 // isPersian checks if a rune belongs to the Persian character set
 func isPersian(r rune) bool {
@@ -121,7 +149,7 @@ func ToPDF(in interface{}) (res []byte, err error) {
 	// add a new page
 	pdf.AddPage()
 
-	err = pdf.AddTTFFont("Vazir", "assets/fonts/Vazir.ttf")
+	err = pdf.AddTTFFont("Vazir", tempFontPath)
 	if err != nil {
 		return []byte{}, err
 	}
@@ -201,8 +229,4 @@ func ToPDF(in interface{}) (res []byte, err error) {
 	b := pdf.GetBytesPdf()
 
 	return b, nil
-}
-
-func ToExcel(in interface{}) (res string, err error) {
-	return "", errors.New("not implemented")
 }
