@@ -6,7 +6,7 @@ import (
 	"testing"
 )
 
-func TestToPDF(t *testing.T) {
+func getData() interface{} {
 	// Test code here
 	type Person struct {
 		FirstName string `pdf:"نام"`
@@ -31,11 +31,25 @@ func TestToPDF(t *testing.T) {
 		{"Jane", "Brown", 69, "A", "B", "C", "D"},
 	}
 
+	return p
+}
+
+func TestToPDF(t *testing.T) {
+	p := getData()
 	pdf, err := ToPDF(p)
 	assert.Nil(t, err)
 
 	// write the pdf to a file
 	err = os.WriteFile("test.pdf", []byte(pdf), 0644)
 	assert.Nil(t, err)
+}
 
+func TestToExcel(t *testing.T) {
+	p := getData()
+	excel, err := ToExcel(p)
+	assert.Nil(t, err)
+
+	// write the excel to a file
+	err = os.WriteFile("test.xlsx", []byte(excel), 0644)
+	assert.Nil(t, err)
 }
