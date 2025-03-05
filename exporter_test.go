@@ -9,27 +9,34 @@ import (
 func getData() interface{} {
 	// Test code here
 	type Person struct {
-		FirstName string `pdf:"نام"`
-		LastName  string `pdf:"نام خانوادگی"`
-		Age       int    `pdf:"سن"`
-		A         string `pdf:"A"`
-		B         string `pdf:"B"`
-		C         string `pdf:"C"`
-		D         string `pdf:"D"`
+		FirstName string `pdf:"نام" excel:"نام"`
+		LastName  string `pdf:"نام خانوادگی" excel:"نام خانوادگی"`
+		Age       int    `pdf:"سن" excel:"سن"`
 	}
 
-	p := []Person{
-		{"John", "Doe", 30, "A", "B", "C", "D"},
-		{"Jane", "Doe", 29, "A", "B", "C", "D"},
-		{"John", "Smith", 40, "A", "1213123213Bqwedrftghjwertgyhjukl", "C", "D"},
-		{"Jane", "Smith", 39, "A", "B", "C", "D"},
-		{"John", "Johnson", 50, "A", "B", "C", "D"},
-		{"Jane", "Johnson", 49, "A", "B", "C", "D"},
-		{"John", "Williams", 60, "A", "B", "C", "D"},
-		{"Jane", "Williams", 59, "A", "B", "C", "D"},
-		{"John", "Brown", 70, "A", "B", "C", "D"},
-		{"Jane", "Brown", 69, "A", "B", "C", "D"},
+	type Student struct {
+		Person
+		StudentID int `pdf:"شماره دانشجویی" excel:"شماره دانشجویی"`
 	}
+
+	type TA struct {
+		Student
+		Course string `pdf:"درس" excel:"درس"`
+	}
+
+	s := TA{
+		Student: Student{
+			Person: Person{
+				FirstName: "Joe",
+				LastName:  "Doe",
+				Age:       25,
+			},
+			StudentID: 423424,
+		},
+		Course: "Math",
+	}
+
+	p := []TA{s}
 
 	return p
 }

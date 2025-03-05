@@ -2,72 +2,44 @@ package tableport
 
 import (
 	"bytes"
+	"errors"
 	"fmt"
-	"reflect"
-
 	"github.com/xuri/excelize/v2"
 )
 
 // ToExcel converts a slice of structs to an Excel file and returns it as bytes.
-func ToExcel(in interface{}) ([]byte, error) {
-	// Dereference pointer if input is a pointer
-	v := reflect.ValueOf(in)
-	if v.Kind() == reflect.Ptr {
-		v = v.Elem()
+func ToExcel(in interface{}) (res []byte, err error) {
+	keys, values, err := flatten(in, "excel")
+	if err != nil {
+		return
 	}
 
-	// Validate input is a slice
-	if v.Kind() != reflect.Slice {
-		return nil, fmt.Errorf("input must be a slice of structs or slice of struct pointers")
-	}
-
-	// Ensure slice is not empty
-	if v.Len() == 0 {
-		return nil, fmt.Errorf("input slice is empty")
-	}
-
-	// Get the struct type (handle pointer elements)
-	elemType := v.Index(0).Type()
-	if elemType.Kind() == reflect.Ptr {
-		elemType = elemType.Elem()
-	}
-	if elemType.Kind() != reflect.Struct {
-		return nil, fmt.Errorf("input must be a slice of structs or slice of struct pointers")
+	if len(keys) == 0 {
+		err = errors.New("input should be a slice or an array of structs having fields")
+		return
 	}
 
 	// Create a new Excel file
 	f := excelize.NewFile()
 	sheet := "Sheet1"
 
-	// Extract field names as headers
-	var headers []string
-	var fieldIndexes []int
-	for i := 0; i < elemType.NumField(); i++ {
-		field := elemType.Field(i)
-		header := field.Tag.Get("excel")
-		if header == "" {
-			header = field.Name
-		}
-		headers = append(headers, header)
-		fieldIndexes = append(fieldIndexes, i)
-	}
-
 	// Write headers to the first row
-	for col, header := range headers {
+	for col, header := range keys {
 		cell := fmt.Sprintf("%c1", 'A'+col) // A1, B1, C1, etc.
-		f.SetCellValue(sheet, cell, header)
+		err = f.SetCellValue(sheet, cell, header)
+		if err != nil {
+			return
+		}
 	}
 
-	// Write struct values to subsequent rows
-	for row := 0; row < v.Len(); row++ {
-		item := v.Index(row)
-		if item.Kind() == reflect.Ptr {
-			item = item.Elem() // Dereference pointer if it's a pointer
-		}
-
-		for col, fieldIndex := range fieldIndexes {
+	// Write values to the rest of the rows
+	for row, rowValues := range values {
+		for col, value := range rowValues {
 			cell := fmt.Sprintf("%c%d", 'A'+col, row+2) // A2, B2, C2, etc.
-			f.SetCellValue(sheet, cell, item.Field(fieldIndex).Interface())
+			err = f.SetCellValue(sheet, cell, value)
+			if err != nil {
+				return
+			}
 		}
 	}
 
@@ -77,5 +49,6 @@ func ToExcel(in interface{}) ([]byte, error) {
 		return nil, err
 	}
 
-	return buf.Bytes(), nil
+	res = buf.Bytes()
+	return
 }
